@@ -36,7 +36,7 @@ const initialContributors = [
 ];
 
 function App() {
-  const [contributors, setContributors] = useState(initialContributors);
+  const [contributors] = useState(initialContributors);
   const [selectedMonth, setSelectedMonth] = useState("2025-07");
   const [searchTerm, setSearchTerm] = useState("");
   const [adminMode, setAdminMode] = useState(false);
@@ -63,7 +63,7 @@ function App() {
 
   const total = filteredContributors.reduce((sum, c) => sum + c.payments.reduce((s, p) => s + p.amount, 0), 0);
   const totalFees = fee > 0
-	? filteredContributors.reduce((count, c) => count + c.payments.lengh * fee, 0)
+	? filteredContributors.reduce((count, c) => count + c.payments.length * fee, 0)
 	: 0;
   const net = total - totalFees;
 
@@ -151,9 +151,9 @@ function App() {
         </ul>
 
         {overdueContributors.length > 0 && (
-          <marquee behavior="scroll" direction="left" style={{ color: "red", marginTop: "20px", fontWeight: "bold" }}>
-            The following people should have their payments made by 15th {selectedMonth.split("-")[1]}/{selectedMonth.split("-")[0]}: {overdueContributors.map(c => c.name).join(", ")}.
-          </marquee>
+         <div className="scrolling-text" style={{ color: "red", marginTop: "20px", fontWeight: "bold" }}>
+		   The following people should have their payments made by 15th {selectedMonth.split("-")[1]}/{selectedMonth.split("-")[0]}: {overdueContributors.map(c => c.name).join(", ")}.
+		</div>
         )}
       </div>
     </div>
