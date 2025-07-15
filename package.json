@@ -35,5 +35,22 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
-  }
+  },
+  "description": "This app tracks monthly contributions for our WhatsApp group and makes payments transparent.",
+  "main": "index.js",
+  "devDependencies": {
+    "jest": "^27.5.1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DINGZTRADER/savings-bag-throwback.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/DINGZTRADER/savings-bag-throwback/issues"
+  },
+  "homepage": "https://github.com/DINGZTRADER/savings-bag-throwback#readme"
 }
