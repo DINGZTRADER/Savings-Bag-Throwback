@@ -36,15 +36,24 @@ const initialContributors = [
 ];
 
 function App() {
-  const [contributors] = useState(initialContributors);
+  const [contributors, setContributors] = useState(initialContributors);
   const [selectedMonth, setSelectedMonth] = useState("2025-07");
   const [searchTerm, setSearchTerm] = useState("");
   const [adminMode, setAdminMode] = useState(false);
   const [adminAuthenticated, setAdminAuthenticated] = useState(false);
   const correctPassword = "admin2025";
 
+  const [newPayment, setNewPayment] = useState({
+    name: "",
+    amount: "",
+    method: "MTN",
+    date: new Date().toISOString().slice(0, 10)
+  });
+
   const fee = selectedMonth >= "2025-08" ? 500 : 0;
   const deadlineDay = 15;
+
+  const contributorNames = [...new Set(contributors.map(c => c.name))];
 
   const filteredContributors = contributors.map((c) => {
     const filteredPayments = c.payments.filter((p) => p.date.startsWith(selectedMonth));
@@ -62,9 +71,7 @@ function App() {
   });
 
   const total = filteredContributors.reduce((sum, c) => sum + c.payments.reduce((s, p) => s + p.amount, 0), 0);
-  const totalFees = fee > 0
-	? filteredContributors.reduce((count, c) => count + c.payments.length * fee, 0)
-	: 0;
+  const totalFees = filteredContributors.reduce((count, c) => count + c.payments.length * fee, 0);
   const net = total - totalFees;
 
   const handleMTNPay = () => {
@@ -74,6 +81,48 @@ function App() {
   const handleAirtelPay = () => {
     window.location.href = "tel:*185*1*1#";
   };
+
+  const handleAddPayment = () => {
+    const existing = contributors.find(c => c.name === newPayment.name);
+    if (existing) {
+      setContributors(prev => prev.map(c => {
+        if (c.name === newPayment.name) {
+          return {
+            ...c,
+            payments: [...c.payments, {
+              amount: parseInt(newPayment.amount),
+              date: newPayment.date,
+              method: newPayment.method
+            }]
+          };
+        }
+        return c;
+      }));
+    } else {
+      setContributors(prev => [...prev, {
+        name: newPayment.name,
+        payments: [{
+          amount: parseInt(newPayment.amount),
+          date: newPayment.date,
+          method: newPayment.method
+        }]
+      }]);
+    }
+    setNewPayment({ name: "", amount: "", method: "MTN", date: new Date().toISOString().slice(0, 10) });
+  };
+
+		const handleRemovePayment = (contributorName, paymentIndex) => {
+  setContributors(prev =>
+    prev.map(c => {
+      if (c.name === contributorName) {
+        const updatedPayments = [...c.payments];
+        updatedPayments.splice(paymentIndex, 1);
+        return { ...c, payments: updatedPayments };
+      }
+      return c;
+    })
+  );
+};
 
   return (
     <div className="App" style={{ fontFamily: "Segoe UI, sans-serif", padding: "20px", background: "#f9f9fb", minHeight: "100vh" }}>
@@ -87,22 +136,6 @@ function App() {
               <option value="2025-07">July 2025</option>
               <option value="2025-08">August 2025</option>
               <option value="2025-09">September 2025</option>
-			  <option value="2025-10">October 2025</option>
-			  <option value="2025-11">November 2025</option>
-			  <option value="2025-12">December 2025</option>
-			  <option value="2026-01">January 2026</option>
-			  <option value="2026-02">February 2026</option>
-			  <option value="2026-03">March 2026</option>
-			  <option value="2026-04">April 2026</option>
-			  <option value="2026-05">May 2026</option>
-			  <option value="2026-06">June 2026</option>
-			  <option value="2026-07">July 2026</option>
-			  <option value="2026-08">August 2026</option>
-			  <option value="2026-09">September 2026</option>
-			  <option value="2026-10">October 2026</option>
-			  <option value="2026-11">November 2026</option>
-			  <option value="2026-12">December 2026</option>
-			  
             </select>
           </div>
 
@@ -141,19 +174,77 @@ function App() {
           style={{ width: "100%", padding: "10px", marginBottom: "15px", borderRadius: "8px", border: "1px solid #ccc" }}
         />
 
-        <ul style={{ listStyle: "none", padding: 0 }}>
-          {filteredContributors.map((c, idx) => (
-            <li key={idx} style={{ marginBottom: "8px", display: "flex", justifyContent: "space-between", alignItems: "center", background: "#fefefe", padding: "8px 12px", borderRadius: "6px", border: "1px solid #eee" }}>
-              <span>{c.name}</span>
-              <span>{hasPaid(c) ? "✅" : "❌"}</span>
+        {adminMode && (
+          <div style={{ marginBottom: "20px" }}>
+            <h4>Add Payment</h4>
+            <select value={newPayment.name} onChange={e => setNewPayment({ ...newPayment, name: e.target.value })} style={{ width: "100%", marginBottom: "10px" }}>
+              <option value="">-- Select Name or Type New --</option>
+              {contributorNames.map((name, idx) => (
+                <option key={idx} value={name}>{name}</option>
+              ))}
+            </select>
+            <input
+              type="text"
+              placeholder="Or enter new name..."
+              value={newPayment.name}
+              onChange={e => setNewPayment({ ...newPayment, name: e.target.value })}
+              style={{ width: "100%", marginBottom: "10px" }}
+            />
+            <input type="number" placeholder="Amount" value={newPayment.amount} onChange={e => setNewPayment({ ...newPayment, amount: e.target.value })} style={{ width: "100%", marginBottom: "10px" }} />
+            <select value={newPayment.method} onChange={e => setNewPayment({ ...newPayment, method: e.target.value })} style={{ width: "100%", marginBottom: "10px" }}>
+              <option value="MTN">MTN</option>
+              <option value="Airtel">Airtel</option>
+            </select>
+            <input type="date" value={newPayment.date} onChange={e => setNewPayment({ ...newPayment, date: e.target.value })} style={{ width: "100%", marginBottom: "10px" }} />
+            <button onClick={handleAddPayment}>Add Payment</button>
+          </div>
+        )}
+
+<ul style={{ listStyle: "none", padding: 0 }}>
+  {filteredContributors.map((c, idx) => (
+    <li key={idx} style={{ marginBottom: "10px", background: "#fefefe", padding: "10px 12px", borderRadius: "6px", border: "1px solid #eee" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <strong>{c.name}</strong>
+        <span>
+          {hasPaid(c)
+            ? adminMode
+              ? `✅ UGX ${c.payments.reduce((s, p) => s + p.amount, 0).toLocaleString()}`
+              : "✅"
+            : "❌"}
+        </span>
+      </div>
+
+      {adminMode && hasPaid(c) && (
+        <ul style={{ marginTop: "6px", paddingLeft: "15px", fontSize: "14px" }}>
+          {c.payments.map((p, i) => (
+            <li key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <span>{p.date} - UGX {p.amount.toLocaleString()} ({p.method})</span>
+              <button
+                onClick={() => handleRemovePayment(c.name, i)}
+                style={{
+                  marginLeft: "10px",
+                  background: "#ffdddd",
+                  border: "1px solid #dd0000",
+                  color: "#aa0000",
+                  borderRadius: "4px",
+                  cursor: "pointer",
+                  padding: "2px 6px",
+                }}
+              >
+                🗑 Remove
+              </button>
             </li>
           ))}
         </ul>
+      )}
+    </li>
+  ))}
+</ul>
 
         {overdueContributors.length > 0 && (
-         <div className="scrolling-text" style={{ color: "red", marginTop: "20px", fontWeight: "bold" }}>
-		   The following people should have their payments made by 15th {selectedMonth.split("-")[1]}/{selectedMonth.split("-")[0]}: {overdueContributors.map(c => c.name).join(", ")}.
-		</div>
+          <marquee behavior="scroll" direction="left" style={{ color: "red", marginTop: "20px", fontWeight: "bold" }}>
+            The following people should have their payments made by 15th {selectedMonth.split("-")[1]}/{selectedMonth.split("-")[0]}: {overdueContributors.map(c => c.name).join(", ")}.
+          </marquee>
         )}
       </div>
     </div>
